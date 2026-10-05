@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="void_black">#05070D</color>
+    <color name="charcoal">#0D1117</color>
+    <color name="panel">#111927</color>
+    <color name="neon_cyan">#22D3EE</color>
+    <color name="neon_violet">#A78BFA</color>
+    <color name="neon_green">#34D399</color>
+    <color name="warn">#FBBF24</color>
+    <color name="danger">#F87171</color>
+    <color name="muted">#8B949E</color>
+</resources>

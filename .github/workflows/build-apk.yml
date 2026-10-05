@@ -1,0 +1,117 @@
+name: Build Debug APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Verify Java version
+        run: |
+          java -version
+          javac -version
+          echo "JAVA_HOME=${JAVA_HOME}"
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.3.1
+
+      - name: Create temporary debug keystore
+        run: |
+          mkdir -p ~/.android
+          rm -f ~/.android/debug.keystore
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build debug APK
+        run: gradle :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Verify APK
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          ls -lh "$APK"
+          file "$APK"
+          echo "APK build succeeded: $APK" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Create GitHub Release with debug APK
+        id: create_release
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="debug-apk-build-${{ github.run_number }}-${{ github.run_attempt }}"
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          NOTES="This is an automatically generated debug APK.
+          The APK was built by GitHub Actions.
+          GitHub Actions run number: ${{ github.run_number }}
+          GitHub Actions run attempt: ${{ github.run_attempt }}
+          Source commit SHA: ${{ github.sha }}
+          This APK is intended for testing.
+          This APK is not a Play Store production release.
+          This APK is signed only with a temporary debug keystore."
+          gh release create "$TAG" "$APK" --target "${{ github.sha }}" --title "$TAG" --notes "$NOTES" --latest
+
+      - name: Report APK download result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="debug-apk-build-${{ github.run_number }}-${{ github.run_attempt }}"
+          APK_FILE="app-debug.apk"
+          if [ "${{ steps.create_release.outcome }}" = "success" ]; then
+            echo "Release publishing succeeded."
+            gh release view "$TAG" --json tagName,name,url > /tmp/release.json
+            RELEASE_URL=$(gh release view "$TAG" --json url --jq .url)
+            echo "Release tag: $TAG"
+            echo "Release title: $TAG"
+            echo "Release page URL: $RELEASE_URL"
+            echo "APK asset filename: $APK_FILE"
+            {
+              echo "## APK download"
+              echo "Release tag: $TAG"
+              echo "Release title: $TAG"
+              echo "Release page: $RELEASE_URL"
+              echo "APK asset: $APK_FILE"
+              echo ""
+              echo "The APK can be downloaded from the release Assets section."
+              echo "The normal Actions artifact is also available as a backup."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Release publishing failed, but the APK build succeeded. The Actions artifact remains available."
+            echo "APK build succeeded."
+            echo "Actions artifact named app-debug-apk remains available."
+            {
+              echo "## APK download result"
+              echo "::warning::Release publishing failed, but the APK build succeeded."
+              echo ""
+              echo "APK build succeeded."
+              echo "Actions artifact named app-debug-apk remains available as a backup."
+              echo "Download it from the Actions run summary page."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi

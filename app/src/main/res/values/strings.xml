@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GitPush</string>
+    <string name="app_tagline">Push files directly to GitHub</string>
+    <string name="privacy_direct">Your files are sent directly from your device to GitHub.</string>
+    <string name="pat_warning">Your Personal Access Token is sensitive. Never share it with anyone. It is stored encrypted on this device and only sent to api.github.com over HTTPS.</string>
+</resources>
