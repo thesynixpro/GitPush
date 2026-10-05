@@ -1,7 +1,7 @@
 [versions]
 agp = "9.1.1"
-kotlin = "2.1.20"
-ksp = "2.1.20-1.0.32"
+kotlin = "2.2.0"
+ksp = "2.2.0-2.0.2"
 core-ktx = "1.13.1"
 lifecycle = "2.8.3"
 activity-compose = "1.9.2"

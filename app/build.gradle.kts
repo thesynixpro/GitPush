@@ -1,9 +1,10 @@
-import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.JavaVersion
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+// NOTE (AGP 9 built-in Kotlin): org.jetbrains.kotlin.android must NOT be applied here.
+// AGP compiles Kotlin itself; applying KGP fails with "Cannot add extension with name 'kotlin'".
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
@@ -39,7 +40,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 
     buildFeatures {
         compose = true
@@ -48,6 +48,13 @@ android {
 
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    }
+}
+
+// Provided by AGP built-in Kotlin (replaces removed kotlinOptions block).
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
