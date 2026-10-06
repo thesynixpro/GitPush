@@ -39,7 +39,7 @@ If configuration is already saved: `Splash → Select Folder → Review → Push
 ## Project structure
 
 ```
-app/src/main/java/com/gitpush/app/
+app/src/main/java/com/aprax/gitpush/
   MainActivity.kt, GitPushApplication.kt
   model/       ScannedFile, PushRequest, PushProgress, PushOutcome…
   storage/     SecureCredentialStore, AppPreferences, HistoryDatabase

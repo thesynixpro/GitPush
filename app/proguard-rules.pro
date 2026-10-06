@@ -1,5 +1,5 @@
 # Keep GitHub API models (Gson reflection)
 -keepattributes Signature, InnerClasses, EnclosingMethod
--keep class com.gitpush.app.github.** { *; }
--keep class com.gitpush.app.storage.** { *; }
--keep class com.gitpush.app.model.** { *; }
+-keep class com.aprax.gitpush.github.** { *; }
+-keep class com.aprax.gitpush.storage.** { *; }
+-keep class com.aprax.gitpush.model.** { *; }

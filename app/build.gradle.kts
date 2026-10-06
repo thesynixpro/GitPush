@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.gitpush.app"
+    namespace = "com.aprax.gitpush"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gitpush.app"
+        applicationId = "com.aprax.gitpush"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
