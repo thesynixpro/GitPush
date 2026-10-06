@@ -162,8 +162,8 @@ class GitHubRepository(private val context: Context) {
             try {
                 val a = api(token)
                 // 1. Resolve base commit for branch (create branch from default if missing).
-                val baseSha: String
-                val baseTreeSha: String?
+                var baseSha: String
+                var baseTreeSha: String?
                 try {
                     val ref = a.getRef(cfg.owner, cfg.repo, cfg.branch)
                     baseSha = ref.obj?.sha ?: throw IllegalStateException("branch ref empty")
@@ -348,7 +348,7 @@ class GitHubRepository(private val context: Context) {
                     return streamEncode(cr.openInputStream(uri)!!)
                 }
             }
-            out.writeBytes(all.flatten())
+            out.writeBytes(all)
             return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
         }
         return null

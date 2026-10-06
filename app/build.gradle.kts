@@ -59,6 +59,8 @@ kotlin {
 }
 
 dependencies {
+    // Required: AGP built-in Kotlin does not add stdlib automatically (KGP did).
+    implementation(libs.kotlin.stdlib)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.viewmodel)
