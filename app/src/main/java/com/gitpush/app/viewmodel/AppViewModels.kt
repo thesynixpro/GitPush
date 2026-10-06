@@ -151,7 +151,7 @@ class PushSessionViewModel(
         owner = o; repo = r; branch = b.ifBlank { "main" }; destPath = d
         username = u; tokenInput = t; commitMessage = c
     }
-    fun setPolicy(p: ExistingFilePolicy) { policy = p }
+    fun updatePolicy(p: ExistingFilePolicy) { policy = p }
 
     // ---------- scan ----------
     fun startScan(uri: Uri) {

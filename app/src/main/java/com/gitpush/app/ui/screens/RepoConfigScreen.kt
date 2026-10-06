@@ -96,7 +96,7 @@ fun RepoConfigScreen(
                 ExistingFilePolicy.entries.forEach { p ->
                     FilterChip(
                         selected = vm.policy == p,
-                        onClick = { vm.setPolicy(p) },
+                        onClick = { vm.updatePolicy(p) },
                         label = { Text(p.name.lowercase().replaceFirstChar { c -> c.uppercase() }) }
                     )
                 }
