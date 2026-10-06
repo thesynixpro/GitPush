@@ -25,35 +25,118 @@ class PushSessionViewModel(
     private val network: NetworkMonitor
 ) : ViewModel() {
 
-    var folderName by mutableStateOf("") private set
-    var folderUri by mutableStateOf<Uri?>(null) private set
+    // Compose state with explicit backing fields (no `by ... private set` delegation).
+    private val _folderName = mutableStateOf("")
+    var folderName: String
+        get() = _folderName.value
+        private set(value) { _folderName.value = value }
+
+    private val _folderUri = mutableStateOf<Uri?>(null)
+    var folderUri: Uri?
+        get() = _folderUri.value
+        private set(value) { _folderUri.value = value }
+
     val files = mutableStateListOf<ScannedFile>()
-    var folderCount by mutableStateOf(0) private set
+
+    private val _folderCount = mutableStateOf(0)
+    var folderCount: Int
+        get() = _folderCount.value
+        private set(value) { _folderCount.value = value }
+
     val warnings = mutableStateListOf<String>()
-    var scanning by mutableStateOf(false) private set
-    var scanNote by mutableStateOf("") private set
 
-    var owner by mutableStateOf(creds.owner) private set
-    var repo by mutableStateOf(creds.repo) private set
-    var branch by mutableStateOf(creds.branch.ifBlank { appPrefs.snapshot().defaultBranch }) private set
-    var destPath by mutableStateOf(creds.destPath) private set
-    var username by mutableStateOf(creds.username) private set
-    var tokenInput by mutableStateOf("") private set  // never persisted in memory longer than needed
-    var commitMessage by mutableStateOf(appPrefs.snapshot().defaultCommit) private set
-    var policy by mutableStateOf(appPrefs.snapshot().existingPolicy) private set
+    private val _scanning = mutableStateOf(false)
+    var scanning: Boolean
+        get() = _scanning.value
+        private set(value) { _scanning.value = value }
 
-    var connStatus by mutableStateOf<ConnectionResult?>(null) private set
-    var testing by mutableStateOf(false) private set
+    private val _scanNote = mutableStateOf("")
+    var scanNote: String
+        get() = _scanNote.value
+        private set(value) { _scanNote.value = value }
 
-    var progress by mutableStateOf(PushProgress()) private set
-    var pushing by mutableStateOf(false) private set
-    var lastSha by mutableStateOf<String?>(null) private set
-    var lastError by mutableStateOf<String?>(null) private set
-    var lastTechnical by mutableStateOf<String?>(null) private set
+    private val _owner = mutableStateOf(creds.owner)
+    var owner: String
+        get() = _owner.value
+        private set(value) { _owner.value = value }
+
+    private val _repo = mutableStateOf(creds.repo)
+    var repo: String
+        get() = _repo.value
+        private set(value) { _repo.value = value }
+
+    private val _branch = mutableStateOf(creds.branch.ifBlank { appPrefs.snapshot().defaultBranch })
+    var branch: String
+        get() = _branch.value
+        private set(value) { _branch.value = value }
+
+    private val _destPath = mutableStateOf(creds.destPath)
+    var destPath: String
+        get() = _destPath.value
+        private set(value) { _destPath.value = value }
+
+    private val _username = mutableStateOf(creds.username)
+    var username: String
+        get() = _username.value
+        private set(value) { _username.value = value }
+
+    private val _tokenInput = mutableStateOf("")
+    var tokenInput: String // never persisted in memory longer than needed
+        get() = _tokenInput.value
+        private set(value) { _tokenInput.value = value }
+
+    private val _commitMessage = mutableStateOf(appPrefs.snapshot().defaultCommit)
+    var commitMessage: String
+        get() = _commitMessage.value
+        private set(value) { _commitMessage.value = value }
+
+    private val _policy = mutableStateOf(appPrefs.snapshot().existingPolicy)
+    var policy: ExistingFilePolicy
+        get() = _policy.value
+        private set(value) { _policy.value = value }
+
+    private val _connStatus = mutableStateOf<ConnectionResult?>(null)
+    var connStatus: ConnectionResult?
+        get() = _connStatus.value
+        private set(value) { _connStatus.value = value }
+
+    private val _testing = mutableStateOf(false)
+    var testing: Boolean
+        get() = _testing.value
+        private set(value) { _testing.value = value }
+
+    private val _progress = mutableStateOf(PushProgress())
+    var progress: PushProgress
+        get() = _progress.value
+        private set(value) { _progress.value = value }
+
+    private val _pushing = mutableStateOf(false)
+    var pushing: Boolean
+        get() = _pushing.value
+        private set(value) { _pushing.value = value }
+
+    private val _lastSha = mutableStateOf<String?>(null)
+    var lastSha: String?
+        get() = _lastSha.value
+        private set(value) { _lastSha.value = value }
+
+    private val _lastError = mutableStateOf<String?>(null)
+    var lastError: String?
+        get() = _lastError.value
+        private set(value) { _lastError.value = value }
+
+    private val _lastTechnical = mutableStateOf<String?>(null)
+    var lastTechnical: String?
+        get() = _lastTechnical.value
+        private set(value) { _lastTechnical.value = value }
+
     val lastFailedFiles = mutableStateListOf<String>()
 
     // ASK-policy dialog queue
-    var pendingConflict by mutableStateOf<String?>(null) private set
+    private val _pendingConflict = mutableStateOf<String?>(null)
+    var pendingConflict: String?
+        get() = _pendingConflict.value
+        private set(value) { _pendingConflict.value = value }
     private var conflictContinuation: CompletableDeferred<ExistingFilePolicy>? = null
     var applyToAll: Boolean = false
 
