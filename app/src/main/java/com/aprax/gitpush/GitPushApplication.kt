@@ -8,6 +8,7 @@ import com.aprax.gitpush.storage.HistoryDatabase
 import com.aprax.gitpush.storage.SecureCredentialStore
 import com.aprax.gitpush.viewmodel.PushSessionViewModel
 import com.aprax.gitpush.viewmodel.SettingsViewModel
+import com.aprax.gitpush.util.CrashReporter
 
 /** Manual DI container — no external backend, everything on-device. */
 class GitPushApplication : Application() {
@@ -23,6 +24,8 @@ class GitPushApplication : Application() {
     /** Startup must never crash: secure storage degrades gracefully, DB falls back to memory. */
     override fun onCreate() {
         super.onCreate()
+        // Install first: any later startup crash is saved to Downloads + files/crashes.
+        runCatching { CrashReporter.install(this) }
         creds = SecureCredentialStore(this) // never throws; reports isAvailable instead
         prefs = AppPreferences(this)
         github = GitHubRepository(this)

@@ -15,6 +15,7 @@ import androidx.navigation.compose.*
 import com.aprax.gitpush.ui.navigation.Routes
 import com.aprax.gitpush.ui.screens.*
 import com.aprax.gitpush.ui.theme.GitPushTheme
+import com.aprax.gitpush.util.CrashReporter
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,9 +28,27 @@ class MainActivity : ComponentActivity() {
             val settings = remember { app.settings }
             val snap by settings.appPrefs.state.collectAsState()
             var showSplash by remember { mutableStateOf(true) }
+            var crashFile by remember {
+                mutableStateOf(runCatching { CrashReporter.pendingReport(this@MainActivity) }.getOrNull())
+            }
 
             GitPushTheme(themeMode = snap.themeMode) {
-                if (showSplash) {
+                if (crashFile != null) {
+                    // Previous run died: show its trace with copy button instead of normal UI.
+                    val text = remember(crashFile) {
+                        CrashReporter.readReport(crashFile!!)
+                    }
+                    CrashReportScreen(
+                        reportText = text,
+                        accentName = snap.accent,
+                        onCopy = {},
+                        onContinue = {
+                            runCatching { crashFile!!.delete() }
+                            CrashReporter.clearReports(this@MainActivity)
+                            crashFile = null
+                        }
+                    )
+                } else if (showSplash) {
                     SplashScreen { showSplash = false }
                 } else {
                     val nav = rememberNavController()
