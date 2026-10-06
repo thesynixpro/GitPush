@@ -140,7 +140,8 @@ class PushSessionViewModel(
     private var conflictContinuation: CompletableDeferred<ExistingFilePolicy>? = null
     var applyToAll: Boolean = false
 
-    val totalBytes: Long get() = files.filter { it.selected }.sumOf { if (it.size > 0) it.size else 0 }    val selectedCount: Int get() = files.count { it.selected && it.skipReason == null }
+    val totalBytes: Long get() = files.filter { it.selected }.sumOf { if (it.size > 0) it.size else 0 }
+    val selectedCount: Int get() = files.count { it.selected && it.skipReason == null }
     val totalCount: Int get() = files.size
     val skippedCount: Int get() = files.count { it.skipReason != null }
     val isConfigured: Boolean get() = creds.hasRepoConfig()
