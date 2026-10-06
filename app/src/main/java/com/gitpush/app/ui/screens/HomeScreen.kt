@@ -86,6 +86,18 @@ fun HomeScreen(
             }
         }
 
+        if (!vm.storageAvailable) {
+            GlassCard(accent = MaterialTheme.colorScheme.error) {
+                Text(
+                    "Secure storage is unavailable on this device" +
+                        (vm.storageError?.let { " ($it)" } ?: "") +
+                        ". GitHub login is disabled, but you can still browse and review folders.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
         // Hero card
         GlassCard(accent = accent) {
             Text("Push Files to GitHub", style = MaterialTheme.typography.headlineMedium)

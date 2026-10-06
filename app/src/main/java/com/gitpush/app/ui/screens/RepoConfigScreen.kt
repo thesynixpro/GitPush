@@ -132,7 +132,10 @@ fun RepoConfigScreen(
             "Save & Continue",
             onClick = {
                 sync()
-                if (vm.saveConfiguration()) onNext()
+                if (!vm.storageAvailable) {
+                    msg = "Secure storage is unavailable on this device, so the token cannot be saved safely."
+                    msgOk = false
+                } else if (vm.saveConfiguration()) onNext()
                 else { msg = "Fill owner, repo and token first."; msgOk = false }
             },
             accent = accent

@@ -8,74 +8,110 @@ import androidx.security.crypto.MasterKey
 /**
  * Keystore-backed encrypted storage for the GitHub PAT + account fields.
  * NEVER logs the token. Token is only ever sent to https://api.github.com.
+ *
+ * Fail-safe: if the Android Keystore / encrypted prefs cannot be initialised
+ * on this device, the store reports [isAvailable] = false and every accessor
+ * degrades to safe defaults instead of throwing. This guarantees the app
+ * always opens; the UI explains that GitHub login is unavailable.
  */
 class SecureCredentialStore(context: Context) {
 
     private val appCtx = context.applicationContext
 
-    private val masterKey: MasterKey by lazy {
-        MasterKey.Builder(appCtx, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+    private var encrypted: SharedPreferences? = null
+
+    /** Human-readable reason when [isAvailable] is false. Never contains secrets. */
+    var unavailableReason: String? = null
+        private set
+
+    val isAvailable: Boolean get() = encrypted != null
+
+    init {
+        encrypted = try {
+            val masterKey = MasterKey.Builder(appCtx, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                appCtx,
+                "gitpush_secure_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            unavailableReason = e::class.java.simpleName
+            null
+        }
     }
 
-    private val prefs: SharedPreferences by lazy {
-        EncryptedSharedPreferences.create(
-            appCtx,
-            "gitpush_secure_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+    private fun get(key: String, def: String): String {
+        return try {
+            encrypted?.getString(key, def) ?: def
+        } catch (_: Exception) {
+            def
+        }
+    }
+
+    private fun put(key: String, value: String): Boolean {
+        return try {
+            val p = encrypted ?: return false
+            p.edit().putString(key, value).apply()
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     var username: String
-        get() = prefs.getString(KEY_USER, "") ?: ""
-        set(v) = prefs.edit().putString(KEY_USER, v).apply()
+        get() = get(KEY_USER, "")
+        set(v) { put(KEY_USER, v) }
 
     var owner: String
-        get() = prefs.getString(KEY_OWNER, "") ?: ""
-        set(v) = prefs.edit().putString(KEY_OWNER, v).apply()
+        get() = get(KEY_OWNER, "")
+        set(v) { put(KEY_OWNER, v) }
 
     var repo: String
-        get() = prefs.getString(KEY_REPO, "") ?: ""
-        set(v) = prefs.edit().putString(KEY_REPO, v).apply()
+        get() = get(KEY_REPO, "")
+        set(v) { put(KEY_REPO, v) }
 
     var branch: String
-        get() = prefs.getString(KEY_BRANCH, "main") ?: "main"
-        set(v) = prefs.edit().putString(KEY_BRANCH, v).apply()
+        get() = get(KEY_BRANCH, "main").ifBlank { "main" }
+        set(v) { put(KEY_BRANCH, v) }
 
     var destPath: String
-        get() = prefs.getString(KEY_DEST, "") ?: ""
-        set(v) = prefs.edit().putString(KEY_DEST, v).apply()
+        get() = get(KEY_DEST, "")
+        set(v) { put(KEY_DEST, v) }
 
-    /** Write token (encrypted at rest via Keystore). */
-    fun saveToken(token: String) {
-        prefs.edit().putString(KEY_TOKEN, token.trim()).apply()
-    }
+    /** Write token (encrypted at rest via Keystore). Returns false when storage is unavailable. */
+    fun saveToken(token: String): Boolean = put(KEY_TOKEN, token.trim())
 
     /** Read token. Caller must never log or display it. */
-    fun getToken(): String = prefs.getString(KEY_TOKEN, "") ?: ""
+    fun getToken(): String = get(KEY_TOKEN, "")
 
-    fun hasToken(): Boolean = getToken().isNotBlank()
+    fun hasToken(): Boolean = isAvailable && getToken().isNotBlank()
 
     /** True when minimal config is present. */
     fun hasRepoConfig(): Boolean =
-        owner.isNotBlank() && repo.isNotBlank() && branch.isNotBlank() && hasToken()
+        isAvailable && owner.isNotBlank() && repo.isNotBlank() &&
+            branch.isNotBlank() && hasToken()
 
     fun clearCredentials() {
-        prefs.edit()
-            .remove(KEY_TOKEN)
-            .remove(KEY_USER)
-            .remove(KEY_OWNER)
-            .remove(KEY_REPO)
-            .remove(KEY_BRANCH)
-            .remove(KEY_DEST)
-            .apply()
+        try {
+            encrypted?.edit()
+                ?.remove(KEY_TOKEN)
+                ?.remove(KEY_USER)
+                ?.remove(KEY_OWNER)
+                ?.remove(KEY_REPO)
+                ?.remove(KEY_BRANCH)
+                ?.remove(KEY_DEST)
+                ?.apply()
+        } catch (_: Exception) { /* best effort */ }
     }
 
     fun clearTokenOnly() {
-        prefs.edit().remove(KEY_TOKEN).apply()
+        try {
+            encrypted?.edit()?.remove(KEY_TOKEN)?.apply()
+        } catch (_: Exception) { /* best effort */ }
     }
 
     companion object {

@@ -140,12 +140,13 @@ class PushSessionViewModel(
     private var conflictContinuation: CompletableDeferred<ExistingFilePolicy>? = null
     var applyToAll: Boolean = false
 
-    val totalBytes: Long get() = files.filter { it.selected }.sumOf { if (it.size > 0) it.size else 0 }
-    val selectedCount: Int get() = files.count { it.selected && it.skipReason == null }
+    val totalBytes: Long get() = files.filter { it.selected }.sumOf { if (it.size > 0) it.size else 0 }    val selectedCount: Int get() = files.count { it.selected && it.skipReason == null }
     val totalCount: Int get() = files.size
     val skippedCount: Int get() = files.count { it.skipReason != null }
     val isConfigured: Boolean get() = creds.hasRepoConfig()
     val hasToken: Boolean get() = creds.hasToken()
+    val storageAvailable: Boolean get() = creds.isAvailable
+    val storageError: String? get() = creds.unavailableReason
 
     fun setField(o: String, r: String, b: String, d: String, u: String, t: String, c: String) {
         owner = o; repo = r; branch = b.ifBlank { "main" }; destPath = d
@@ -222,9 +223,10 @@ class PushSessionViewModel(
     }
 
     fun saveConfiguration(): Boolean {
+        if (!creds.isAvailable) return false
         if (owner.isBlank() || repo.isBlank()) return false
         val token = tokenInput.trim()
-        if (token.isNotEmpty()) creds.saveToken(token)
+        if (token.isNotEmpty() && !creds.saveToken(token)) return false
         if (!creds.hasToken()) return false
         creds.username = username.trim()
         creds.owner = owner.trim()

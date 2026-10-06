@@ -20,13 +20,17 @@ class GitPushApplication : Application() {
     lateinit var session: PushSessionViewModel private set
     lateinit var settings: SettingsViewModel private set
 
+    /** Startup must never crash: secure storage degrades gracefully, DB falls back to memory. */
     override fun onCreate() {
         super.onCreate()
-        creds = SecureCredentialStore(this)
+        creds = SecureCredentialStore(this) // never throws; reports isAvailable instead
         prefs = AppPreferences(this)
         github = GitHubRepository(this)
         network = NetworkMonitor(this)
-        db = HistoryDatabase.get(this)
+        db = runCatching { HistoryDatabase.get(this) }.getOrElse {
+            // Last-resort in-memory history so the app still works.
+            androidx.room.Room.inMemoryDatabaseBuilder(this, HistoryDatabase::class.java).build()
+        }
         session = PushSessionViewModel(this, github, creds, prefs, db, network)
         settings = SettingsViewModel(this, creds, prefs, github, db)
     }
